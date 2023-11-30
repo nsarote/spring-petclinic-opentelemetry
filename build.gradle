@@ -27,6 +27,7 @@ dependencies {
   implementation 'javax.cache:cache-api'
   implementation 'jakarta.xml.bind:jakarta.xml.bind-api'
   implementation 'io.opentelemetry:opentelemetry-api'
+  implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:1.26.0'
   runtimeOnly 'org.springframework.boot:spring-boot-starter-actuator'
   runtimeOnly "org.webjars.npm:bootstrap:${webjarsBootstrapVersion}"
   runtimeOnly "org.webjars.npm:font-awesome:${webjarsFontawesomeVersion}"

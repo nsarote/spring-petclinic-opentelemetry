@@ -146,6 +146,11 @@
       <version>${opentelemetry.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-instrumentation-annotations</artifactId>
+      <version>1.26.0</version>
+    </dependency>
   </dependencies>
 
   <dependencyManagement>

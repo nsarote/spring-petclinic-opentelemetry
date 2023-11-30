@@ -15,13 +15,16 @@
  */
 package org.springframework.samples.petclinic.owner;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.validation.Valid;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
-
-import io.opentelemetry.api.trace.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,15 +32,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-
-import jakarta.validation.Valid;
 
 /**
  * @author Juergen Hoeller
@@ -53,6 +49,9 @@ class OwnerController {
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
 
 	private final OwnerRepository owners;
+
+	@Autowired
+	private Tracer tracer;
 
 	public OwnerController(OwnerRepository clinicService) {
 		this.owners = clinicService;
@@ -93,9 +92,16 @@ class OwnerController {
 	@GetMapping("/owners")
 	public String processFindForm(@RequestParam(defaultValue = "1") int page, Owner owner, BindingResult result,
 			Model model) {
-		// allow parameterless GET request for /owners to return all records
-		if (owner.getLastName() == null) {
-			owner.setLastName(""); // empty string signifies broadest possible search
+		// Use opentelemetry api to add more log
+		Span span = tracer.spanBuilder("Validate last name").setAttribute("lastName", owner.getLastName()).startSpan();
+		try {
+			// allow parameterless GET request for /owners to return all records
+			if (owner.getLastName() == null) {
+				owner.setLastName(""); // empty string signifies broadest possible search
+			}
+		}
+		finally {
+			span.end();
 		}
 
 		// find owners by last name
@@ -126,6 +132,7 @@ class OwnerController {
 		return "owners/ownersList";
 	}
 
+	@WithSpan
 	private Page<Owner> findPaginatedForOwnersLastName(int page, String lastname) {
 		int pageSize = 5;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
